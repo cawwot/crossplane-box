@@ -1,7 +1,57 @@
-apiVersion: api.example.org/v1alpha1
-kind: strgcompute
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
 metadata:
-  name: strgcompute-app1
-spec: 
-  location: "US"
-  name: "strgcompute-app1"
+  name: xgitlabrunners.gitlab.organization.io
+spec:
+  group: gitlab.organization.io
+  names:
+    kind: XGitLabRunner
+    plural: xgitlabrunners
+  claimNames:
+    kind: GitLabRunner
+    plural: gitlabrunners
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    projectId:
+                      type: string
+                      description: "GitLab project ID for runner registration"
+                    # runnerEnvironment: ##TODO: prly all shared-services
+                    #   type: string
+                    #   enum: ["dev", "stage", "prod"]
+                    #   default: "dev"
+                    department:
+                      type: string
+                      default: "devops"
+                    instanceClass:
+                      type: string
+                      enum: ["featherweight", "lightweight", "midweight", "heavyweight"]
+                      default: "lightweight"
+                    architecture:
+                      type: string
+                      enum: ["amd64", "arm64"]
+                      default: "amd64"
+                    operatingSystem:
+                      type: string
+                      enum: ["linux", "windows"] ##TODO: windows
+                      default: "linux"
+                    computeResources:
+                      type: object
+                      properties:
+                        cpu:
+                          type: string
+                        memory:
+                          type: string
+                      required: ["cpu", "memory"]
+                  required: ["projectId", "instanceClass", "architecture", "operatingSystem"]
