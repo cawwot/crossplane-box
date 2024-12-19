@@ -27,31 +27,127 @@ spec:
                     projectId:
                       type: string
                       description: "GitLab project ID for runner registration"
-                    # runnerEnvironment: ##TODO: prly all shared-services
-                    #   type: string
-                    #   enum: ["dev", "stage", "prod"]
-                    #   default: "dev"
+                    runnerEnvironment:
+                      type: string
+                      default: "dev"
                     department:
                       type: string
                       default: "devops"
                     instanceClass:
                       type: string
-                      enum: ["featherweight", "lightweight", "midweight", "heavyweight"]
                       default: "lightweight"
-                    architecture:
-                      type: string
-                      enum: ["amd64", "arm64"]
-                      default: "amd64"
-                    operatingSystem:
-                      type: string
-                      enum: ["linux", "windows"] ##TODO: windows
-                      default: "linux"
                     computeResources:
                       type: object
                       properties:
                         cpu:
                           type: string
+                          default: "1"
                         memory:
                           type: string
-                      required: ["cpu", "memory"]
-                  required: ["projectId", "instanceClass", "architecture", "operatingSystem"]
+                          default: "2Gi"
+                  required: ["projectId"]
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xgitlabrunners.gitlab.organization.io
+spec:
+  compositeTypeRef:
+    apiVersion: gitlab.organization.io/v1alpha1
+    kind: XGitLabRunner
+  resources:
+    # GitLab Runner Configuration
+    - name: runner-config
+      base:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: gitlab-runner-config
+        data:
+          config.toml: |
+            concurrent = 4
+            check_interval = 30
+            [[runners]]
+              [runners.kubernetes]
+                image = "ubuntu:22.04"
+                privileged = false
+                namespace = "gitlab-runners"
+                poll_timeout = 600
+                cpu_request = "${spec.parameters.computeResources.cpu}"
+                cpu_limit = "${spec.parameters.computeResources.cpu}"
+                memory_request = "${spec.parameters.computeResources.memory}"
+                memory_limit = "${spec.parameters.computeResources.memory}"
+
+    # GitLab Runner Secret
+    - name: runner-token
+      base:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: gitlab-runner-token
+        type: Opaque
+        stringData:
+          runner-token: ${RUNNER_TOKEN}
+
+    # GitLab Runner Deployment
+    - name: runner-deployment
+      base:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: gitlab-runner
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: gitlab-runner
+          template:
+            metadata:
+              labels:
+                app: gitlab-runner
+                runner-class: ${spec.parameters.instanceClass}
+                department: ${spec.parameters.department}
+                runner-env: ${spec.parameters.runnerEnvironment}
+                os: linux
+                arch: amd64
+            spec:
+              containers:
+                - name: gitlab-runner
+                  image: gitlab/gitlab-runner:latest
+                  resources:
+                    requests:
+                      cpu: ${spec.parameters.computeResources.cpu}
+                      memory: ${spec.parameters.computeResources.memory}
+                    limits:
+                      cpu: ${spec.parameters.computeResources.cpu}
+                      memory: ${spec.parameters.computeResources.memory}
+                  env:
+                    - name: CUSTOM_ENV_CI_RUNNER_TAGS
+                      value: "env=${spec.parameters.runnerEnvironment},project=all,os=linux,arch=amd64,dept=${spec.parameters.department},cluster=${spec.parameters.instanceClass}"
+                  volumeMounts:
+                    - name: config
+                      mountPath: /etc/gitlab-runner
+                      readOnly: true
+                    - name: docker-socket
+                      mountPath: /var/run/docker.sock
+              volumes:
+                - name: config
+                  configMap:
+                    name: gitlab-runner-config
+                - name: docker-socket
+                  hostPath:
+                    path: /var/run/docker.sock
+---
+apiVersion: gitlab.organization.io/v1alpha1
+kind: GitLabRunner
+metadata:
+  name: local-runner
+spec:
+  parameters:
+    projectId: "12345"
+    runnerEnvironment: "dev"
+    department: "devops"
+    instanceClass: "lightweight"
+    computeResources:
+      cpu: "1"
+      memory: "2Gi"
