@@ -29,7 +29,7 @@ spec:
   project: default
   source:
     path: app1
-    repoURL: https://github.com/git2senthil/crossplane-box
+    repoURL: https://github.com/cawwot/crossplane-box
     targetRevision: HEAD
   syncPolicy:
     automated:
