@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Piotr1215/crossplane-box
+    repoURL: https://github.com/cawwot/crossplane-box
     path: yaml
     targetRevision: HEAD
   destination:
@@ -37,26 +37,26 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: app2
-  namespace: argocd
-spec:
-  destination:
-    namespace: argocd
-    server: https://kubernetes.default.svc
-  project: default
-  source:
-    path: app2
-    repoURL: https://github.com/git2senthil/crossplane-box
-    targetRevision: HEAD
-  syncPolicy:
-    automated:
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: app2
+#   namespace: argocd
+# spec:
+#   destination:
+#     namespace: argocd
+#     server: https://kubernetes.default.svc
+#   project: default
+#   source:
+#     path: app2
+#     repoURL: https://github.com/git2senthil/crossplane-box
+#     targetRevision: HEAD
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
+# ---
 # apiVersion: s3.aws.upbound.io/v1beta1
 # kind: Bucket
 # metadata:
