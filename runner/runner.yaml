@@ -36,6 +36,9 @@ spec:
                     instanceClass:
                       type: string
                       default: "lightweight"
+                    namespace:
+                      type: string
+                      default: "gitlab-runners"
                     computeResources:
                       type: object
                       properties:
@@ -56,6 +59,14 @@ spec:
     apiVersion: gitlab.organization.io/v1alpha1
     kind: XGitLabRunner
   resources:
+    # Namespace
+    - name: runner-namespace
+      base:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: gitlab-runners
+
     # GitLab Runner Configuration
     - name: runner-config
       base:
@@ -63,7 +74,7 @@ spec:
         kind: ConfigMap
         metadata:
           name: gitlab-runner-config
-        namespace: runner
+          namespace: gitlab-runners
         data:
           config.toml: |
             concurrent = 4
@@ -86,10 +97,19 @@ spec:
         kind: Secret
         metadata:
           name: gitlab-runner-token
-        namespace: runner
+          namespace: gitlab-runners
         type: Opaque
         stringData:
           runner-token: ${RUNNER_TOKEN}
+
+    # Service Account
+    - name: runner-sa
+      base:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: gitlab-runner
+          namespace: gitlab-runners
 
     # GitLab Runner Deployment
     - name: runner-deployment
@@ -98,7 +118,7 @@ spec:
         kind: Deployment
         metadata:
           name: gitlab-runner
-        namespace: runner
+          namespace: gitlab-runners
         spec:
           replicas: 1
           selector:
@@ -114,6 +134,7 @@ spec:
                 os: linux
                 arch: amd64
             spec:
+              serviceAccountName: gitlab-runner
               containers:
                 - name: gitlab-runner
                   image: gitlab/gitlab-runner:latest
@@ -140,18 +161,3 @@ spec:
                 - name: docker-socket
                   hostPath:
                     path: /var/run/docker.sock
----
-apiVersion: gitlab.organization.io/v1alpha1
-kind: GitLabRunner
-metadata:
-  name: local-runner
-namespace: runner
-spec:
-  parameters:
-    projectId: "12345"
-    runnerEnvironment: "dev"
-    department: "devops"
-    instanceClass: "lightweight"
-    computeResources:
-      cpu: "1"
-      memory: "2Gi"
