@@ -12,9 +12,9 @@ metadata:
 spec:
   credentials:
     source: InjectedIdentity
-  identity:
-    type: ServiceAccount
-    source: ServiceAccount
+  # identity:
+  #   type: ServiceAccount
+  #   source: ServiceAccount
 ---
 apiVersion: v1
 kind: ServiceAccount
