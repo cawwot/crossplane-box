@@ -36,9 +36,6 @@ spec:
                     instanceClass:
                       type: string
                       default: "lightweight"
-                    namespace:
-                      type: string
-                      default: "gitlab-runners"
                     computeResources:
                       type: object
                       properties:
@@ -62,102 +59,127 @@ spec:
     # Namespace
     - name: runner-namespace
       base:
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-          name: gitlab-runners
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: gitlab-runners
 
-    # GitLab Runner Configuration
+    # ConfigMap
     - name: runner-config
       base:
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: gitlab-runner-config
-          namespace: gitlab-runners
-        data:
-          config.toml: |
-            concurrent = 4
-            check_interval = 30
-            [[runners]]
-              [runners.kubernetes]
-                image = "ubuntu:22.04"
-                privileged = false
-                namespace = "gitlab-runners"
-                poll_timeout = 600
-                cpu_request = "${spec.parameters.computeResources.cpu}"
-                cpu_limit = "${spec.parameters.computeResources.cpu}"
-                memory_request = "${spec.parameters.computeResources.memory}"
-                memory_limit = "${spec.parameters.computeResources.memory}"
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: gitlab-runner-config
+                namespace: gitlab-runners
+              data:
+                config.toml: |
+                  concurrent = 4
+                  check_interval = 30
+                  [[runners]]
+                    [runners.kubernetes]
+                      image = "ubuntu:22.04"
+                      privileged = false
+                      namespace = "gitlab-runners"
+                      poll_timeout = 600
+                      cpu_request = "${spec.parameters.computeResources.cpu}"
+                      cpu_limit = "${spec.parameters.computeResources.cpu}"
+                      memory_request = "${spec.parameters.computeResources.memory}"
+                      memory_limit = "${spec.parameters.computeResources.memory}"
 
-    # GitLab Runner Secret
+    # Secret
     - name: runner-token
       base:
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: gitlab-runner-token
-          namespace: gitlab-runners
-        type: Opaque
-        stringData:
-          runner-token: ${RUNNER_TOKEN}
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: gitlab-runner-token
+                namespace: gitlab-runners
+              type: Opaque
+              stringData:
+                runner-token: ${RUNNER_TOKEN}
 
     # Service Account
     - name: runner-sa
       base:
-        apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          name: gitlab-runner
-          namespace: gitlab-runners
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: gitlab-runner
+                namespace: gitlab-runners
 
-    # GitLab Runner Deployment
+    # Deployment
     - name: runner-deployment
       base:
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: gitlab-runner
-          namespace: gitlab-runners
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
         spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: gitlab-runner
-          template:
-            metadata:
-              labels:
-                app: gitlab-runner
-                runner-class: ${spec.parameters.instanceClass}
-                department: ${spec.parameters.department}
-                runner-env: ${spec.parameters.runnerEnvironment}
-                os: linux
-                arch: amd64
-            spec:
-              serviceAccountName: gitlab-runner
-              containers:
-                - name: gitlab-runner
-                  image: gitlab/gitlab-runner:latest
-                  resources:
-                    requests:
-                      cpu: ${spec.parameters.computeResources.cpu}
-                      memory: ${spec.parameters.computeResources.memory}
-                    limits:
-                      cpu: ${spec.parameters.computeResources.cpu}
-                      memory: ${spec.parameters.computeResources.memory}
-                  env:
-                    - name: CUSTOM_ENV_CI_RUNNER_TAGS
-                      value: "env=${spec.parameters.runnerEnvironment},project=all,os=linux,arch=amd64,dept=${spec.parameters.department},cluster=${spec.parameters.instanceClass}"
-                  volumeMounts:
-                    - name: config
-                      mountPath: /etc/gitlab-runner
-                      readOnly: true
-                    - name: docker-socket
-                      mountPath: /var/run/docker.sock
-              volumes:
-                - name: config
-                  configMap:
-                    name: gitlab-runner-config
-                - name: docker-socket
-                  hostPath:
-                    path: /var/run/docker.sock
+          forProvider:
+            manifest:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: gitlab-runner
+                namespace: gitlab-runners
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: gitlab-runner
+                template:
+                  metadata:
+                    labels:
+                      app: gitlab-runner
+                      runner-class: ${spec.parameters.instanceClass}
+                      department: ${spec.parameters.department}
+                      runner-env: ${spec.parameters.runnerEnvironment}
+                      os: linux
+                      arch: amd64
+                  spec:
+                    serviceAccountName: gitlab-runner
+                    containers:
+                      - name: gitlab-runner
+                        image: gitlab/gitlab-runner:latest
+                        resources:
+                          requests:
+                            cpu: ${spec.parameters.computeResources.cpu}
+                            memory: ${spec.parameters.computeResources.memory}
+                          limits:
+                            cpu: ${spec.parameters.computeResources.cpu}
+                            memory: ${spec.parameters.computeResources.memory}
+                        env:
+                          - name: CUSTOM_ENV_CI_RUNNER_TAGS
+                            value: "env=${spec.parameters.runnerEnvironment},project=all,os=linux,arch=amd64,dept=${spec.parameters.department},cluster=${spec.parameters.instanceClass}"
+                        volumeMounts:
+                          - name: config
+                            mountPath: /etc/gitlab-runner
+                            readOnly: true
+                          - name: docker-socket
+                            mountPath: /var/run/docker.sock
+                    volumes:
+                      - name: config
+                        configMap:
+                          name: gitlab-runner-config
+                      - name: docker-socket
+                        hostPath:
+                          path: /var/run/docker.sock
