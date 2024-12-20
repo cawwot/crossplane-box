@@ -1,47 +1,39 @@
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-nop
-spec:
-  package: xpkg.upbound.io/crossplane-contrib/provider-nop:v0.3.0
----
+# First, install the provider
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-kubernetes
 spec:
-  package: xpkg.upbound.io/upbound/provider-kubernetes:v0.16.0
-  runtimeConfigRef:
-    apiVersion: pkg.crossplane.io/v1beta1
-    kind: DeploymentRuntimeConfig
-    name: provider-kubernetes
+  package: crossplane/provider-kubernetes:v0.9.0
 ---
-apiVersion: pkg.crossplane.io/v1beta1
-kind: DeploymentRuntimeConfig
+# Then create the service account and RBAC
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: provider-kubernetes
-spec:
-  serviceAccountTemplate:
-    metadata:
-      name: provider-kubernetes
+  name: crossplane-provider-kubernetes
+  namespace: crossplane-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: provider-kubernetes-cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: provider-kubernetes
-    namespace: crossplane-system
+  name: crossplane-provider-kubernetes
 roleRef:
+  apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: crossplane-provider-kubernetes
+  namespace: crossplane-system
 ---
+# Create the provider config referencing our service account
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
-  name: provider-kubernetes
+  name: kubernetes-local
 spec:
   credentials:
-    source: InjectedIdentity
+    source: ServiceAccount
+    serviceAccountRef:
+      name: crossplane-provider-kubernetes
+      namespace: crossplane-system
