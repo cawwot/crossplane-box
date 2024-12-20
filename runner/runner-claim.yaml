@@ -1,0 +1,14 @@
+apiVersion: gitlab.organization.io/v1alpha1
+kind: GitLabRunner
+metadata:
+  name: local-runner
+  namespace: default
+spec:
+  parameters:
+    projectId: "12345"
+    runnerEnvironment: "dev"
+    department: "devops"
+    instanceClass: "lightweight"
+    computeResources:
+      cpu: "1"
+      memory: "2Gi"
