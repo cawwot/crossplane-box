@@ -1,3 +1,4 @@
+# The XRD definition remains the same at the top
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -26,7 +27,6 @@ spec:
                   properties:
                     projectId:
                       type: string
-                      description: "GitLab project ID for runner registration"
                     runnerEnvironment:
                       type: string
                       default: "dev"
@@ -55,24 +55,14 @@ spec:
   compositeTypeRef:
     apiVersion: gitlab.organization.io/v1alpha1
     kind: XGitLabRunner
-  writeConnectionSecretsToNamespace: crossplane-system
-  patchSets:
-    - name: provider-config
-      patches:
-        - fromFieldPath: "spec.providerConfigRef.name"
-          toFieldPath: "spec.providerConfigRef.name"
   resources:
-    # Namespace
     - name: runner-namespace
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
-        metadata:
-          annotations:
-            crossplane.io/external-name: gitlab-runners
         spec:
           providerConfigRef:
-            name: kubernetes-provider
+            name: kubernetes-local  # Reference to our provider config
           forProvider:
             manifest:
               apiVersion: v1
@@ -84,12 +74,9 @@ spec:
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
-        metadata:
-          annotations:
-            crossplane.io/external-name: gitlab-runner-config
         spec:
           providerConfigRef:
-            name: kubernetes-provider
+            name: kubernetes-local  # Reference to our provider config
           forProvider:
             manifest:
               apiVersion: v1
@@ -112,12 +99,13 @@ spec:
                       memory_request = "${spec.parameters.computeResources.memory}"
                       memory_limit = "${spec.parameters.computeResources.memory}"
 
-    # Secret
     - name: runner-token
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
         spec:
+          providerConfigRef:
+            name: kubernetes-local  # Reference to our provider config
           forProvider:
             manifest:
               apiVersion: v1
@@ -129,26 +117,13 @@ spec:
               stringData:
                 runner-token: ${RUNNER_TOKEN}
 
-    # Service Account
-    - name: runner-sa
-      base:
-        apiVersion: kubernetes.crossplane.io/v1alpha1
-        kind: Object
-        spec:
-          forProvider:
-            manifest:
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: gitlab-runner
-                namespace: gitlab-runners
-
-    # Deployment
     - name: runner-deployment
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
         spec:
+          providerConfigRef:
+            name: kubernetes-local  # Reference to our provider config
           forProvider:
             manifest:
               apiVersion: apps/v1
@@ -171,7 +146,6 @@ spec:
                       os: linux
                       arch: amd64
                   spec:
-                    serviceAccountName: gitlab-runner
                     containers:
                       - name: gitlab-runner
                         image: gitlab/gitlab-runner:latest
