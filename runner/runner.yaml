@@ -55,13 +55,24 @@ spec:
   compositeTypeRef:
     apiVersion: gitlab.organization.io/v1alpha1
     kind: XGitLabRunner
+  writeConnectionSecretsToNamespace: crossplane-system
+  patchSets:
+    - name: provider-config
+      patches:
+        - fromFieldPath: "spec.providerConfigRef.name"
+          toFieldPath: "spec.providerConfigRef.name"
   resources:
     # Namespace
     - name: runner-namespace
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
+        metadata:
+          annotations:
+            crossplane.io/external-name: gitlab-runners
         spec:
+          providerConfigRef:
+            name: kubernetes-provider
           forProvider:
             manifest:
               apiVersion: v1
@@ -69,12 +80,16 @@ spec:
               metadata:
                 name: gitlab-runners
 
-    # ConfigMap
     - name: runner-config
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
+        metadata:
+          annotations:
+            crossplane.io/external-name: gitlab-runner-config
         spec:
+          providerConfigRef:
+            name: kubernetes-provider
           forProvider:
             manifest:
               apiVersion: v1
