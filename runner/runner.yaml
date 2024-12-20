@@ -63,6 +63,7 @@ spec:
         kind: ConfigMap
         metadata:
           name: gitlab-runner-config
+        namespace: runner
         data:
           config.toml: |
             concurrent = 4
@@ -85,6 +86,7 @@ spec:
         kind: Secret
         metadata:
           name: gitlab-runner-token
+        namespace: runner
         type: Opaque
         stringData:
           runner-token: ${RUNNER_TOKEN}
@@ -96,6 +98,7 @@ spec:
         kind: Deployment
         metadata:
           name: gitlab-runner
+        namespace: runner
         spec:
           replicas: 1
           selector:
@@ -142,6 +145,7 @@ apiVersion: gitlab.organization.io/v1alpha1
 kind: GitLabRunner
 metadata:
   name: local-runner
+namespace: runner
 spec:
   parameters:
     projectId: "12345"
