@@ -5,32 +5,33 @@ metadata:
 spec:
   package: xpkg.upbound.io/upbound/provider-kubernetes:v0.16.1
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crossplane-provider-kubernetes
+  namespace: crossplane-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crossplane-provider-kubernetes-admin
+subjects:
+- kind: ServiceAccount
+  name: crossplane-provider-kubernetes
+  namespace: crossplane-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
   name: kubernetes-provider
 spec:
   credentials:
-    source: InjectedIdentity
-  # identity:
-  #   type: ServiceAccount
-  #   source: ServiceAccount
----
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: crossplane-provider-kubernetes
-#   namespace: crossplane-system
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# metadata:
-#   name: crossplane-provider-kubernetes
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: cluster-admin  # Note: Use more restricted roles in production
-# subjects:
-# - kind: ServiceAccount
-#   name: crossplane-provider-kubernetes
-#   namespace: crossplane-system
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: kubernetes-provider-creds
+      key: kubeconfig
