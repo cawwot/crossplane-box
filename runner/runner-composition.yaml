@@ -68,26 +68,25 @@ spec:
                       memory_request = "2Gi"
                       memory_limit = "2Gi"
       patches:
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: spec.parameters.computeResources.cpu
-              - fromFieldPath: spec.parameters.computeResources.cpu
-            strategy: string
-            string:
-              fmt: |
-                concurrent = 4
-                check_interval = 30
-                [[runners]]
-                  [runners.kubernetes]
-                    image = "ubuntu:22.04"
-                    privileged = false
-                    namespace = "gitlab-runners"
-                    poll_timeout = 600
-                    cpu_request = "%s"
-                    cpu_limit = "%s"
-                    memory_request = "2Gi"
-                    memory_limit = "2Gi"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.computeResources.cpu
+          toFieldPath: spec.forProvider.manifest.data.config\.toml
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  concurrent = 4
+                  check_interval = 30
+                  [[runners]]
+                    [runners.kubernetes]
+                      image = "ubuntu:22.04"
+                      privileged = false
+                      namespace = "gitlab-runners"
+                      poll_timeout = 600
+                      cpu_request = "%s"
+                      cpu_limit = "%s"
+                      memory_request = "2Gi"
+                      memory_limit = "2Gi"
 
     # Deployment
     - name: runner-deployment
