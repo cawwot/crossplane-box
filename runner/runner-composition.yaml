@@ -39,7 +39,11 @@ spec:
                 namespace: gitlab-runners
               type: Opaque
               stringData:
-                runner-token: $(RUNNER_TOKEN)
+                runner-token:
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitlab-runner-token
+                      key: runner-token
 
     # Service Account
     - name: runner-sa
@@ -73,7 +77,19 @@ spec:
                 name: gitlab-runner-config
                 namespace: gitlab-runners
               data:
-                config.toml: ""
+                config.toml: |
+                  concurrent = 4
+                  check_interval = 30
+                  [[runners]]
+                    [runners.kubernetes]
+                      image = "ubuntu:22.04"
+                      privileged = false
+                      namespace = "gitlab-runners"
+                      poll_timeout = 600
+                      cpu_request = "1"
+                      cpu_limit = "1"
+                      memory_request = "2Gi"
+                      memory_limit = "2Gi"
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.parameters.computeResources.cpu
