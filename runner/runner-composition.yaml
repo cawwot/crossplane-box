@@ -1,5 +1,3 @@
-
----
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -49,10 +47,10 @@ spec:
                       privileged = false
                       namespace = "gitlab-runners"
                       poll_timeout = 600
-                      cpu_request = "${spec.parameters.computeResources.cpu}"
-                      cpu_limit = "${spec.parameters.computeResources.cpu}"
-                      memory_request = "${spec.parameters.computeResources.memory}"
-                      memory_limit = "${spec.parameters.computeResources.memory}"
+                      cpu_request = "$(spec.parameters.computeResources.cpu)"
+                      cpu_limit = "$(spec.parameters.computeResources.cpu)"
+                      memory_request = "$(spec.parameters.computeResources.memory)"
+                      memory_limit = "$(spec.parameters.computeResources.memory)"
 
     # Secret
     - name: runner-token
@@ -113,9 +111,9 @@ spec:
                   metadata:
                     labels:
                       app: gitlab-runner
-                      runner-class: ${spec.parameters.instanceClass}
-                      department: ${spec.parameters.department}
-                      runner-env: ${spec.parameters.runnerEnvironment}
+                      runner-class: $(spec.parameters.instanceClass)
+                      department: $(spec.parameters.department)
+                      runner-env: $(spec.parameters.runnerEnvironment)
                       os: linux
                       arch: amd64
                   spec:
@@ -125,14 +123,14 @@ spec:
                         image: gitlab/gitlab-runner:latest
                         resources:
                           requests:
-                            cpu: ${spec.parameters.computeResources.cpu}
-                            memory: ${spec.parameters.computeResources.memory}
+                            cpu: $(spec.parameters.computeResources.cpu)
+                            memory: $(spec.parameters.computeResources.memory)
                           limits:
-                            cpu: ${spec.parameters.computeResources.cpu}
-                            memory: ${spec.parameters.computeResources.memory}
+                            cpu: $(spec.parameters.computeResources.cpu)
+                            memory: $(spec.parameters.computeResources.memory)
                         env:
                           - name: CUSTOM_ENV_CI_RUNNER_TAGS
-                            value: "env=${spec.parameters.runnerEnvironment},project=all,os=linux,arch=amd64,dept=${spec.parameters.department},cluster=${spec.parameters.instanceClass}"
+                            value: env=$(spec.parameters.runnerEnvironment),project=all,os=linux,arch=amd64,dept=$(spec.parameters.department),cluster=$(spec.parameters.instanceClass)
                         volumeMounts:
                           - name: config
                             mountPath: /etc/gitlab-runner
@@ -146,3 +144,4 @@ spec:
                       - name: docker-socket
                         hostPath:
                           path: /var/run/docker.sock
+                          
