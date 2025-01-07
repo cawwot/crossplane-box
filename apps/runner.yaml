@@ -17,3 +17,12 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-runner-token
+  namespace: gitlab-runners
+type: Opaque
+data:
+  runner-token: eW91ci1hY3R1YWwtdG9rZW4tdmFsdWU=
