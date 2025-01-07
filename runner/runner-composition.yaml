@@ -63,8 +63,8 @@ spec:
                       privileged = false
                       namespace = "gitlab-runners"
                       poll_timeout = 600
-                      cpu_request = "${CPU_REQUEST}"
-                      cpu_limit = "${CPU_LIMIT}"
+                      cpu_request = "PLACEHOLDER_CPU_REQUEST"
+                      cpu_limit = "PLACEHOLDER_CPU_LIMIT"
                       memory_request = "2Gi"
                       memory_limit = "2Gi"
       patches:
@@ -119,10 +119,10 @@ spec:
                         image: gitlab/gitlab-runner:latest
                         resources:
                           requests:
-                            cpu: "${CPU_REQUEST}"
+                            cpu: "PLACEHOLDER_CPU_REQUEST"
                             memory: "2Gi"
                           limits:
-                            cpu: "${CPU_LIMIT}"
+                            cpu: "PLACEHOLDER_CPU_LIMIT"
                             memory: "2Gi"
                         env:
                           - name: RUNNER_TOKEN
