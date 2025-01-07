@@ -38,12 +38,8 @@ spec:
                 name: gitlab-runner-token
                 namespace: gitlab-runners
               type: Opaque
-              stringData:
-                runner-token:
-                  valueFrom:
-                    secretKeyRef:
-                      name: gitlab-runner-token
-                      key: runner-token
+              data:
+                runner-token: $(RUNNER_TOKEN)
 
     # Service Account
     - name: runner-sa
