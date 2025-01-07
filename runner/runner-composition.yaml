@@ -22,6 +22,41 @@ spec:
               metadata:
                 name: gitlab-runners
 
+    # Secret
+    - name: runner-token
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: gitlab-runner-token
+                namespace: gitlab-runners
+              type: Opaque
+              stringData:
+                runner-token: ${RUNNER_TOKEN}
+
+    # Service Account
+    - name: runner-sa
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: gitlab-runner
+                namespace: gitlab-runners
+
     # ConfigMap with runner configuration
     - name: runner-config
       base:
