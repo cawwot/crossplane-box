@@ -36,4 +36,8 @@ spec:
                     instanceClass:
                       type: string
                       default: "lightweight"
+                    replicas:
+                      type: integer
+                      default: 3
+                      description: "Number of replicas for the GitLab runner deployment"
                   required: ["projectId"]

@@ -113,3 +113,7 @@ spec:
                               secretKeyRef:
                                 name: gitlab-runner-token
                                 key: runner-token
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.replicas
+          toFieldPath: spec.forProvider.manifest.spec.replicas
