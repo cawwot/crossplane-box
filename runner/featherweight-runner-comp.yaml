@@ -54,7 +54,7 @@ spec:
                 name: gitlab-runner-config
                 namespace: gitlab-runners
               data:
-                config\.toml: |
+                config.toml: |
                   concurrent = 4
                   check_interval = 30
                   [[runners]]
