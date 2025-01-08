@@ -83,8 +83,11 @@ spec:
               metadata:
                 name: gitlab-runner
                 namespace: gitlab-runners
+                annotations:
+                  karpenter.sh/do-not-evict: "true"
+                  cilium.io/policy-enforced: "true"
               spec:
-                replicas: 3
+                replicas: 0
                 selector:
                   matchLabels:
                     app: gitlab-runner
@@ -95,6 +98,10 @@ spec:
                       runner-class: xheavyweight
                       department: devops
                       runner-env: dev
+                    annotations:
+                      karpenter.sh/do-not-evict: "true"
+                      cilium.io/policy-enforced: "true"
+                      karpenter.k8s.aws/instance-type: "t3.xlarge"
                   spec:
                     serviceAccountName: gitlab-runner
                     containers:

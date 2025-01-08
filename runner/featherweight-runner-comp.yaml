@@ -63,10 +63,10 @@ spec:
                       privileged = false
                       namespace = "gitlab-runners"
                       poll_timeout = 600
-                      cpu_request = "1000m"
-                      cpu_limit = "1000m"
-                      memory_request = "2Gi"
-                      memory_limit = "2Gi"
+                      cpu_request = "500m"
+                      cpu_limit = "500m"
+                      memory_request = "1Gi"
+                      memory_limit = "1Gi"
 
     # Deployment
     - name: runner-deployment
@@ -101,6 +101,7 @@ spec:
                     annotations:
                       karpenter.sh/do-not-evict: "true"
                       cilium.io/policy-enforced: "true"
+                      karpenter.k8s.aws/instance-type: "t3.micro"
                   spec:
                     serviceAccountName: gitlab-runner
                     containers:
@@ -108,11 +109,11 @@ spec:
                         image: gitlab/gitlab-runner:latest
                         resources:
                           requests:
-                            cpu: "1000m"
-                            memory: "2Gi"
+                            cpu: "500m"
+                            memory: "1Gi"
                           limits:
-                            cpu: "1000m"
-                            memory: "2Gi"
+                            cpu: "500m"
+                            memory: "1Gi"
                         env:
                           - name: RUNNER_TOKEN
                             valueFrom:

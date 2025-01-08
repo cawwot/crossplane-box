@@ -63,10 +63,10 @@ spec:
                       privileged = false
                       namespace = "gitlab-runners"
                       poll_timeout = 600
-                      cpu_request = "4000m"
-                      cpu_limit = "4000m"
-                      memory_request = "8Gi"
-                      memory_limit = "8Gi"
+                      cpu_request = "2000m"
+                      cpu_limit = "2000m"
+                      memory_request = "4Gi"
+                      memory_limit = "4Gi"
 
     # Deployment
     - name: runner-deployment
@@ -83,8 +83,11 @@ spec:
               metadata:
                 name: gitlab-runner
                 namespace: gitlab-runners
+                annotations:
+                  karpenter.sh/do-not-evict: "true"
+                  cilium.io/policy-enforced: "true"
               spec:
-                replicas: 3
+                replicas: 0
                 selector:
                   matchLabels:
                     app: gitlab-runner
@@ -95,6 +98,10 @@ spec:
                       runner-class: heavyweight
                       department: devops
                       runner-env: dev
+                    annotations:
+                      karpenter.sh/do-not-evict: "true"
+                      cilium.io/policy-enforced: "true"
+                      karpenter.k8s.aws/instance-type: "t3.large"
                   spec:
                     serviceAccountName: gitlab-runner
                     containers:
@@ -102,11 +109,11 @@ spec:
                         image: gitlab/gitlab-runner:latest
                         resources:
                           requests:
-                            cpu: "4000m"
-                            memory: "8Gi"
+                            cpu: "2000m"
+                            memory: "4Gi"
                           limits:
-                            cpu: "4000m"
-                            memory: "8Gi"
+                            cpu: "2000m"
+                            memory: "4Gi"
                         env:
                           - name: RUNNER_TOKEN
                             valueFrom:
