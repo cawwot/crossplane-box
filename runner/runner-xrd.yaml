@@ -35,7 +35,7 @@ spec:
                       default: "devops"
                     instanceClass:
                       type: string
-                      default: "lightweight"
+                      default: "featherweight"
                     replicas:
                       type: integer
                       default: 3

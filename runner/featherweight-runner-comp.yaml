@@ -83,6 +83,9 @@ spec:
               metadata:
                 name: gitlab-runner
                 namespace: gitlab-runners
+                annotations:
+                  karpenter.sh/do-not-evict: "true"
+                  cilium.io/policy-enforced: "true"
               spec:
                 replicas: 0
                 selector:
@@ -95,6 +98,9 @@ spec:
                       runner-class: featherweight
                       department: devops
                       runner-env: dev
+                    annotations:
+                      karpenter.sh/do-not-evict: "true"
+                      cilium.io/policy-enforced: "true"
                   spec:
                     serviceAccountName: gitlab-runner
                     containers:
