@@ -104,6 +104,67 @@ spec:
                       {{- end }}
                       [runners.kubernetes.node_selector]
                         kubernetes.io/os = "linux"
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.data.config.toml
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  concurrent = 4
+                  check_interval = 30
+                  [[runners]]
+                    name = "%s-runner"
+                    executor = "docker"
+                    [runners.custom_build_dir]
+                    [runners.cache]
+                      Type = "s3"
+                      Path = "gitlab-runner"
+                      Shared = true
+                      [runners.cache.s3]
+                        ServerAddress = "s3.amazonaws.com"
+                        BucketName = "%s"
+                        Insecure = false
+                    [runners.docker]
+                      tls_verify = false
+                      image = "%s"
+                      privileged = false
+                      disable_entrypoint_overwrite = false
+                      oom_kill_disable = false
+                      disable_cache = false
+                      volumes = ["/cache"]
+                      shm_size = 0
+                    [runners.kubernetes]
+                      namespace = "gitlab-runners"
+                      poll_timeout = 600
+                      {{- if eq .parameters.instanceClass "featherweight" }}
+                      cpu_request = "500m"
+                      cpu_limit = "500m"
+                      memory_request = "1Gi"
+                      memory_limit = "1Gi"
+                      {{- else if eq .parameters.instanceClass "midweight" }}
+                      cpu_request = "1000m"
+                      cpu_limit = "1000m"
+                      memory_request = "2Gi"
+                      memory_limit = "2Gi"
+                      {{- else if eq .parameters.instanceClass "heavyweight" }}
+                      cpu_request = "2000m"
+                      cpu_limit = "2000m"
+                      memory_request = "4Gi"
+                      memory_limit = "4Gi"
+                      {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                      cpu_request = "4000m"
+                      cpu_limit = "4000m"
+                      memory_request = "8Gi"
+                      memory_limit = "8Gi"
+                      {{- end }}
+                      [runners.kubernetes.node_selector]
+                        kubernetes.io/os = "linux"
+                fmtArgs:
+                  - spec.parameters.instanceClass
+                  - spec.parameters.s3BucketName
+                  - spec.parameters.runnerImage
 
     # Deployment
     - name: runner-deployment
@@ -123,17 +184,8 @@ spec:
                 annotations:
                   karpenter.sh/do-not-evict: "true"
                   cilium.io/policy-enforced: "true"
-                  {{- if eq .parameters.instanceClass "featherweight" }}
-                  karpenter.k8s.aws/instance-type: "t3.micro"
-                  {{- else if eq .parameters.instanceClass "midweight" }}
-                  karpenter.k8s.aws/instance-type: "t3.medium"
-                  {{- else if eq .parameters.instanceClass "heavyweight" }}
-                  karpenter.k8s.aws/instance-type: "t3.large"
-                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
-                  karpenter.k8s.aws/instance-type: "t3.xlarge"
-                  {{- end }}
               spec:
-                replicas: {{ .parameters.replicas }}
+                replicas: 0
                 selector:
                   matchLabels:
                     app: gitlab-runner
@@ -141,56 +193,24 @@ spec:
                   metadata:
                     labels:
                       app: gitlab-runner
-                      runner-class: {{ .parameters.instanceClass }}
-                      department: {{ .parameters.department }}
-                      runner-env: {{ .parameters.runnerEnvironment }}
+                      runner-class: featherweight
+                      department: devops
+                      runner-env: dev
                     annotations:
                       karpenter.sh/do-not-evict: "true"
                       cilium.io/policy-enforced: "true"
-                      {{- if eq .parameters.instanceClass "featherweight" }}
-                      karpenter.k8s.aws/instance-type: "t3.micro"
-                      {{- else if eq .parameters.instanceClass "midweight" }}
-                      karpenter.k8s.aws/instance-type: "t3.medium"
-                      {{- else if eq .parameters.instanceClass "heavyweight" }}
-                      karpenter.k8s.aws/instance-type: "t3.large"
-                      {{- else if eq .parameters.instanceClass "xheavyweight" }}
-                      karpenter.k8s.aws/instance-type: "t3.xlarge"
-                      {{- end }}
                   spec:
                     serviceAccountName: gitlab-runner
                     containers:
                       - name: gitlab-runner
                         image: gitlab/gitlab-runner:latest
                         resources:
-                          {{- if eq .parameters.instanceClass "featherweight" }}
                           requests:
                             cpu: "500m"
                             memory: "1Gi"
                           limits:
                             cpu: "500m"
                             memory: "1Gi"
-                          {{- else if eq .parameters.instanceClass "midweight" }}
-                          requests:
-                            cpu: "1000m"
-                            memory: "2Gi"
-                          limits:
-                            cpu: "1000m"
-                            memory: "2Gi"
-                          {{- else if eq .parameters.instanceClass "heavyweight" }}
-                          requests:
-                            cpu: "2000m"
-                            memory: "4Gi"
-                          limits:
-                            cpu: "2000m"
-                            memory: "4Gi"
-                          {{- else if eq .parameters.instanceClass "xheavyweight" }}
-                          requests:
-                            cpu: "4000m"
-                            memory: "8Gi"
-                          limits:
-                            cpu: "4000m"
-                            memory: "8Gi"
-                          {{- end }}
                         env:
                           - name: RUNNER_TOKEN
                             valueFrom:
@@ -207,3 +227,112 @@ spec:
                           items:
                             - key: config.toml
                               path: config.toml
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.replicas
+          toFieldPath: spec.forProvider.manifest.spec.replicas
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels.runner-class
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.department
+          toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels.department
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.runnerEnvironment
+          toFieldPath: spec.forProvider.manifest.spec.template.metadata.labels.runner-env
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.requests.cpu
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  cpu: "500m"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  cpu: "1000m"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  cpu: "2000m"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  cpu: "4000m"
+                  {{- end }}
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.limits.cpu
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  cpu: "500m"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  cpu: "1000m"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  cpu: "2000m"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  cpu: "4000m"
+                  {{- end }}
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.requests.memory
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  memory: "1Gi"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  memory: "2Gi"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  memory: "4Gi"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  memory: "8Gi"
+                  {{- end }}
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].resources.limits.memory
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  memory: "1Gi"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  memory: "2Gi"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  memory: "4Gi"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  memory: "8Gi"
+                  {{- end }}
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.metadata.annotations.karpenter.k8s.aws/instance-type
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.micro"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.medium"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.large"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.xlarge"
+                  {{- end }}
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.instanceClass
+          toFieldPath: spec.forProvider.manifest.spec.template.metadata.annotations.karpenter.k8s.aws/instance-type
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {{- if eq .parameters.instanceClass "featherweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.micro"
+                  {{- else if eq .parameters.instanceClass "midweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.medium"
+                  {{- else if eq .parameters.instanceClass "heavyweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.large"
+                  {{- else if eq .parameters.instanceClass "xheavyweight" }}
+                  karpenter.k8s.aws/instance-type: "t3.xlarge"
+                  {{- end }}

@@ -1,4 +1,3 @@
-
 apiVersion: gitlab.organization.io/v1alpha1
 kind: GitLabRunner
 metadata:
