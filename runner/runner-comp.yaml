@@ -203,7 +203,7 @@ spec:
                     serviceAccountName: gitlab-runner
                     containers:
                       - name: gitlab-runner
-                        image: gitlab/gitlab-runner:latest
+                        image: gitlab/gitlab-runner\:latest
                         resources:
                           requests:
                             cpu: "500m"
