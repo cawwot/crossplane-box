@@ -1,0 +1,48 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xharbors.harbor.org
+spec:
+  group: harbor.org
+  names:
+    kind: XHarbor
+    plural: xharbors
+  claimNames:
+    kind: Harbor
+    plural: harbors
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                region:
+                  type: string
+                  description: "AWS region for RDS and ElastiCache"
+                dbSize:
+                  type: string
+                  description: "RDS instance size"
+                  default: "db.t3.medium"
+                cacheSize:
+                  type: string
+                  description: "ElastiCache node size"
+                  default: "cache.t3.medium"
+                storageSize:
+                  type: integer
+                  description: "Storage size in GB for RDS"
+                  default: 20
+                harborVersion:
+                  type: string
+                  description: "Harbor version to deploy"
+                  default: "2.9.0"
+            status:
+              type: object
+              properties:
+                harborUrl:
+                  type: string
+                  description: "URL to access Harbor"

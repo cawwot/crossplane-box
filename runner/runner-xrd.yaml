@@ -36,20 +36,8 @@ spec:
                     instanceClass:
                       type: string
                       default: "featherweight"
-                      enum:
-                        - "featherweight"
-                        - "midweight"
-                        - "heavyweight"
-                        - "xheavyweight"
                     replicas:
                       type: integer
                       default: 1
                       description: "Number of replicas for the GitLab runner deployment"
-                    runnerImage:
-                      type: string
-                      default: "python:3.9"
-                      description: "Docker image to use for the runner"
-                    s3BucketName:
-                      type: string
-                      description: "S3 bucket name for caching"
-                  required: ["projectId", "s3BucketName"]
+                  required: ["projectId"]

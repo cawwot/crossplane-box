@@ -1,0 +1,10 @@
+apiVersion: harbor.org/v1alpha1
+kind: Harbor
+metadata:
+  name: harbor-prod
+spec:
+  region: us-west-2
+  dbSize: db.t3.medium
+  cacheSize: cache.t3.medium
+  storageSize: 50
+  harborVersion: "2.9.0"

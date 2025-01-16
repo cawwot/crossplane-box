@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: harbor-crossplane
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: <your-git-repo>
+    path: harbor
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

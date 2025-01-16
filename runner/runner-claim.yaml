@@ -9,8 +9,6 @@ spec:
     department: "devops"
     instanceClass: "featherweight"
     replicas: 2
-    runnerImage: "python:3.9"
-    s3BucketName: "your-s3-bucket"
 ---
 apiVersion: v1
 kind: Secret
