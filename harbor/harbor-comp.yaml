@@ -28,9 +28,6 @@ spec:
               - name: harbor-db-sg
           providerConfigRef:
             name: default
-          writeConnectionSecretToRef:
-            name: 66258c8a-24ad-45e6-a79e-1d54c19d908c-mysqlserver
-            namespace: crossplane-system
       patches:
         - fromFieldPath: spec.region
           toFieldPath: spec.forProvider.region
