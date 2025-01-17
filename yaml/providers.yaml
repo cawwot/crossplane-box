@@ -35,9 +35,24 @@ spec:
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: provider-aws-s3
+  name: provider-aws-rds
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.17.0
+  package: xpkg.upbound.io/crossplane-contrib/provider-aws:v0.41.0
+  controllerConfigRef:
+    name: aws-config
+---
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: aws-config
+spec:
+  args:
+    - --debug
+  metadata:
+    annotations:
+      container.seccomp.security.alpha.kubernetes.io/manager: runtime/default
+    labels:
+      app: crossplane
 ---
 apiVersion: aws.upbound.io/v1beta1
 kind: ProviderConfig

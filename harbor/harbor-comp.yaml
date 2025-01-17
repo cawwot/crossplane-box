@@ -13,7 +13,7 @@ spec:
     # RDS Instance
     - name: rds
       base:
-        apiVersion: database.aws.crossplane.io/v1beta1
+        apiVersion: rds.aws.crossplane.io/v1alpha1
         kind: RDSInstance
         spec:
           forProvider:
@@ -36,7 +36,7 @@ spec:
     # ElastiCache Redis
     - name: redis
       base:
-        apiVersion: cache.aws.crossplane.io/v1beta1
+        apiVersion: elasticache.aws.crossplane.io/v1alpha1
         kind: ReplicationGroup
         spec:
           forProvider:
@@ -53,7 +53,7 @@ spec:
         - fromFieldPath: spec.cacheSize
           toFieldPath: spec.forProvider.cacheNodeType
 
-    # Harbor Helm Release
+    # Harbor Helm Release remains the same as before
     - name: harbor
       base:
         apiVersion: helm.crossplane.io/v1beta1
