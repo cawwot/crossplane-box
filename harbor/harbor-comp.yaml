@@ -13,8 +13,8 @@ spec:
     # RDS Instance
     - name: rds
       base:
-        apiVersion: rds.aws.upbound.io/v1beta1
-        kind: Instance
+        apiVersion:  database.aws.crossplane.io/v1beta1
+        kind: RDSInstance
         spec:
           forProvider:
             region: us-west-2
@@ -28,6 +28,9 @@ spec:
               - name: harbor-db-sg
           providerConfigRef:
             name: default
+          writeConnectionSecretToRef:
+            name: 66258c8a-24ad-45e6-a79e-1d54c19d908c-mysqlserver
+            namespace: crossplane-system
       patches:
         - fromFieldPath: spec.region
           toFieldPath: spec.forProvider.region
