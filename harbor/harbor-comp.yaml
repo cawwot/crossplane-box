@@ -13,10 +13,11 @@ spec:
     # RDS Instance
     - name: rds
       base:
-        apiVersion: rds.aws.crossplane.io/v1alpha1
-        kind: RDSInstance
+        apiVersion: rds.aws.upbound.io/v1beta1
+        kind: Instance
         spec:
           forProvider:
+            region: us-west-2
             dbInstanceClass: db.t3.medium
             masterUsername: harbor
             engine: postgres
@@ -25,6 +26,8 @@ spec:
             publiclyAccessible: false
             vpcSecurityGroupRefs:
               - name: harbor-db-sg
+          providerConfigRef:
+            name: default
       patches:
         - fromFieldPath: spec.region
           toFieldPath: spec.forProvider.region
@@ -36,24 +39,25 @@ spec:
     # ElastiCache Redis
     - name: redis
       base:
-        apiVersion: elasticache.aws.crossplane.io/v1alpha1
-        kind: ReplicationGroup
+        apiVersion: elasticache.aws.upbound.io/v1beta1
+        kind: Cluster
         spec:
           forProvider:
-            replicationGroupDescription: Harbor Redis Cache
+            region: us-west-2
             engine: redis
             engineVersion: "6.x"
-            cacheNodeType: cache.t3.medium
-            numCacheClusters: 2
-            automaticFailoverEnabled: true
+            nodeType: cache.t3.medium
+            numCacheNodes: 2
             port: 6379
+          providerConfigRef:
+            name: default
       patches:
         - fromFieldPath: spec.region
           toFieldPath: spec.forProvider.region
         - fromFieldPath: spec.cacheSize
-          toFieldPath: spec.forProvider.cacheNodeType
+          toFieldPath: spec.forProvider.nodeType
 
-    # Harbor Helm Release remains the same as before
+    # Harbor Helm Release
     - name: harbor
       base:
         apiVersion: helm.crossplane.io/v1beta1
@@ -90,10 +94,12 @@ spec:
               redis:
                 type: external
                 external:
-                  host: ${redis.status.atEndpoint}
+                  host: ${redis.status.endpoint}
                   port: "6379"
               ha:
                 enabled: true
+          providerConfigRef:
+            name: default
       patches:
         - fromFieldPath: spec.harborVersion
           toFieldPath: spec.forProvider.chart.version

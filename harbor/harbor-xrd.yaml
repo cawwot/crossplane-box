@@ -35,7 +35,7 @@ spec:
                 storageSize:
                   type: integer
                   description: "Storage size in GB for RDS"
-                  default: 20
+                  default: 120
                 harborVersion:
                   type: string
                   description: "Harbor version to deploy"
